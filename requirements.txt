@@ -1,0 +1,8 @@
+# Core: no required dependencies — uses Python stdlib only.
+#
+# Optional: install `rich` for polished terminal output.
+# Without it the tool falls back to a plain ANSI renderer automatically.
+rich>=13.0.0
+
+# Test runner
+pytest>=7.0
