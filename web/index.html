@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PASSVAULT — Smart Password Security</title>
+  <title>AION — Keys of the Cosmos</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,11 +11,11 @@
   <!-- ── Header ─────────────────────────────────────────────── -->
   <header>
     <div class="logo">
-      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"/>
-        <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span class="brand-name">PASSVAULT <span class="brand-ver">V2.0</span></span>
+      <img class="logo-icon" src="aion-logo.png" alt="AION logo"/>
+      <div class="brand-text">
+        <span class="brand-name">AION</span>
+        <span class="brand-slogan">Keys of the Cosmos</span>
+      </div>
     </div>
     <div class="header-right">
       <span class="status-dot"></span>
@@ -78,6 +78,10 @@
               <div class="field-wrap">
                 <input type="number" id="pwLengthInput" class="field-inp" min="5" max="128" value="16" />
                 <label class="field-lbl" for="pwLengthInput">Length</label>
+                <div class="stepper-btns" data-target="pwLengthInput">
+                  <button class="stepper-up" tabindex="-1" aria-label="Increase">&#9650;</button>
+                  <button class="stepper-dn" tabindex="-1" aria-label="Decrease">&#9660;</button>
+                </div>
               </div>
               <p class="field-hint" id="pwLengthHint">Value must be between 5 and 128. Use 14 characters or more to generate a strong password.</p>
             </div>
@@ -97,12 +101,20 @@
                 <div class="field-wrap">
                   <input type="number" id="minNumbers" class="field-inp" min="0" max="20" value="1" />
                   <label class="field-lbl" for="minNumbers">Minimum numbers</label>
+                  <div class="stepper-btns" data-target="minNumbers">
+                    <button class="stepper-up" tabindex="-1" aria-label="Increase">&#9650;</button>
+                    <button class="stepper-dn" tabindex="-1" aria-label="Decrease">&#9660;</button>
+                  </div>
                 </div>
               </div>
               <div class="field-group">
                 <div class="field-wrap">
                   <input type="number" id="minSpecial" class="field-inp" min="0" max="20" value="0" />
                   <label class="field-lbl" for="minSpecial">Minimum special</label>
+                  <div class="stepper-btns" data-target="minSpecial">
+                    <button class="stepper-up" tabindex="-1" aria-label="Increase">&#9650;</button>
+                    <button class="stepper-dn" tabindex="-1" aria-label="Decrease">&#9660;</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -130,6 +142,10 @@
               <div class="field-wrap">
                 <input type="number" id="ppWordCount" class="field-inp" min="3" max="20" value="6" />
                 <label class="field-lbl" for="ppWordCount">Number of words</label>
+                <div class="stepper-btns" data-target="ppWordCount">
+                  <button class="stepper-up" tabindex="-1" aria-label="Increase">&#9650;</button>
+                  <button class="stepper-dn" tabindex="-1" aria-label="Decrease">&#9660;</button>
+                </div>
               </div>
               <p class="field-hint" id="ppWordHint">Value must be between 3 and 20. Use 6 words or more to generate a strong passphrase.</p>
             </div>
@@ -352,7 +368,7 @@
   </main>
 
   <!-- ── Footer ──────────────────────────────────────────────── -->
-  <footer>PASSVAULT &bull; No server data &bull; All crypto runs locally in your browser</footer>
+  <footer>AION &bull; Portrayed as holding the keys of the cosmos &bull; All crypto runs locally &bull; No server data</footer>
 
   <!-- ══════════════════════════════════════════════════════════
        GENERATOR HISTORY MODAL

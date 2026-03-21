@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple local HTTP server for the PASSVAULT web UI.
+Simple local HTTP server for the AION web UI.
 
 Usage:
     python web/server.py          # serves on http://localhost:8080

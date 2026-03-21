@@ -31,6 +31,71 @@ function showToast(msg) {
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
+/* ── Custom number steppers ──────────────────────────────────── */
+document.querySelectorAll('.stepper-btns').forEach(stepperEl => {
+  const inp   = document.getElementById(stepperEl.dataset.target);
+  if (!inp) return;
+
+  const upBtn = stepperEl.querySelector('.stepper-up');
+  const dnBtn = stepperEl.querySelector('.stepper-dn');
+
+  function getMin() { return inp.min !== '' ? parseFloat(inp.min) : -Infinity; }
+  function getMax() { return inp.max !== '' ? parseFloat(inp.max) :  Infinity; }
+
+  function updateBoundaryState() {
+    const val = parseFloat(inp.value) || 0;
+    dnBtn.disabled = val <= getMin();
+    upBtn.disabled = val >= getMax();
+  }
+
+  function syncCheckboxes(val) {
+    if (inp.id === 'minNumbers' && val > 0) chkDigits.checked  = true;
+    if (inp.id === 'minSpecial' && val > 0) chkSymbols.checked = true;
+  }
+
+  function step(dir) {
+    const min  = getMin();
+    const max  = getMax();
+    const inc  = parseFloat(inp.step) || 1;
+    const next = Math.round(((parseFloat(inp.value) || 0) + dir * inc) * 1e9) / 1e9;
+    if (next < min || next > max) return;
+    inp.value = next;
+    syncCheckboxes(next);
+    updateBoundaryState();
+    inp.dispatchEvent(new Event('input',  { bubbles: true }));
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Single click step
+  upBtn.addEventListener('click', () => step(+1));
+  dnBtn.addEventListener('click', () => step(-1));
+
+  // Hold-to-repeat (press and hold)
+  let _interval, _timeout;
+  function startRepeat(dir) {
+    _timeout = setTimeout(() => {
+      _interval = setInterval(() => step(dir), 80);
+    }, 400);
+  }
+  function stopRepeat() {
+    clearTimeout(_timeout);
+    clearInterval(_interval);
+  }
+
+  upBtn.addEventListener('mousedown', () => startRepeat(+1));
+  dnBtn.addEventListener('mousedown', () => startRepeat(-1));
+  document.addEventListener('mouseup', stopRepeat);
+
+  // Keep boundary state in sync when user types directly
+  inp.addEventListener('input', () => {
+    syncCheckboxes(parseFloat(inp.value) || 0);
+    updateBoundaryState();
+  });
+
+  // Initialise disabled state
+  updateBoundaryState();
+});
+
 /* ── Main tab navigation ─────────────────────────────────────── */
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {
