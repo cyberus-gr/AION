@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PASSVAULT — Smart Password Security</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"/>
+        <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-name">PASSVAULT <span class="brand-ver">V2.0</span></span>
+    </div>
+    <div class="header-right">
+      <span class="status-dot"></span>
+      <span class="status-badge">ALL LOCAL</span>
+    </div>
+  </header>
+
+  <!-- ── Main Tab Nav ───────────────────────────────────────── -->
+  <nav class="tab-nav">
+    <button class="tab active" data-tab="generator">Generator</button>
+    <button class="tab"        data-tab="vault">File Vault</button>
+    <button class="tab lab"    data-tab="lab">Lab Analysis</button>
+  </nav>
+
+  <main>
+
+    <!-- ══════════════════════════════════════════════════════
+         GENERATOR
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-generator" class="panel active">
+      <div class="gen-wrapper">
+
+        <!-- Sub-tabs: Password / Passphrase / Username -->
+        <div class="gen-subtabs">
+          <button class="gen-subtab active" data-mode="password">Password</button>
+          <button class="gen-subtab"        data-mode="passphrase">Passphrase</button>
+          <button class="gen-subtab"        data-mode="username">Username</button>
+        </div>
+
+        <!-- Output box -->
+        <div class="gen-output-box">
+          <span class="gen-output-value" id="pwDisplay">—</span>
+          <div class="gen-output-actions">
+            <button class="gen-action-btn" id="regenerateBtn" title="Regenerate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="gen-action-btn" id="copyBtn" title="Copy to clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strength bar (shown for password + passphrase) -->
+        <div class="gen-strength-wrap" id="genStrengthWrap">
+          <div class="gen-strength-fill" id="genStrengthFill"></div>
+          <span class="gen-strength-label" id="genStrengthLabel"></span>
+        </div>
+
+        <!-- ── PASSWORD options ──────────────────────────── -->
+        <div class="gen-options-panel" id="optPassword">
+          <p class="options-heading">Options</p>
+
+          <div class="opt-card">
+            <div class="field-group">
+              <div class="field-wrap">
+                <input type="number" id="pwLengthInput" class="field-inp" min="5" max="128" value="16" />
+                <label class="field-lbl" for="pwLengthInput">Length</label>
+              </div>
+              <p class="field-hint" id="pwLengthHint">Value must be between 5 and 128. Use 14 characters or more to generate a strong password.</p>
+            </div>
+          </div>
+
+          <div class="opt-card">
+            <p class="opt-section-label">Include</p>
+            <div class="include-row">
+              <label class="sq-check"><input type="checkbox" id="chkUpper" checked /><span class="sq-box"></span>A-Z</label>
+              <label class="sq-check"><input type="checkbox" id="chkLower" checked /><span class="sq-box"></span>a-z</label>
+              <label class="sq-check"><input type="checkbox" id="chkDigits" checked /><span class="sq-box"></span>0-9</label>
+              <label class="sq-check"><input type="checkbox" id="chkSymbols" /><span class="sq-box"></span>!@#$%^&amp;*</label>
+            </div>
+
+            <div class="min-fields">
+              <div class="field-group">
+                <div class="field-wrap">
+                  <input type="number" id="minNumbers" class="field-inp" min="0" max="20" value="1" />
+                  <label class="field-lbl" for="minNumbers">Minimum numbers</label>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-wrap">
+                  <input type="number" id="minSpecial" class="field-inp" min="0" max="20" value="0" />
+                  <label class="field-lbl" for="minSpecial">Minimum special</label>
+                </div>
+              </div>
+            </div>
+
+            <label class="sq-check standalone">
+              <input type="checkbox" id="chkNoAmbig" /><span class="sq-box"></span>
+              Avoid ambiguous characters
+            </label>
+          </div>
+
+          <button class="history-link" id="historyBtnPw">
+            Generator history
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- ── PASSPHRASE options ────────────────────────── -->
+        <div class="gen-options-panel hidden" id="optPassphrase">
+          <p class="options-heading">Options</p>
+
+          <div class="opt-card">
+            <div class="field-group">
+              <div class="field-wrap">
+                <input type="number" id="ppWordCount" class="field-inp" min="3" max="20" value="6" />
+                <label class="field-lbl" for="ppWordCount">Number of words</label>
+              </div>
+              <p class="field-hint" id="ppWordHint">Value must be between 3 and 20. Use 6 words or more to generate a strong passphrase.</p>
+            </div>
+          </div>
+
+          <div class="opt-card">
+            <div class="field-group">
+              <div class="field-wrap">
+                <input type="text" id="ppSeparator" class="field-inp" placeholder=" " />
+                <label class="field-lbl" for="ppSeparator">Word separator</label>
+              </div>
+              <p class="field-hint">Leave empty to join words together (e.g. MapleStormBlade).</p>
+            </div>
+            <label class="sq-check standalone">
+              <input type="checkbox" id="ppCapitalize" checked /><span class="sq-box"></span>
+              Capitalize
+            </label>
+            <label class="sq-check standalone">
+              <input type="checkbox" id="ppIncludeNum" checked /><span class="sq-box"></span>
+              Include number
+            </label>
+          </div>
+
+          <button class="history-link" id="historyBtnPp">
+            Generator history
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- ── USERNAME options ──────────────────────────── -->
+        <div class="gen-options-panel hidden" id="optUsername">
+          <p class="options-heading">Options</p>
+
+          <div class="opt-card">
+            <p class="opt-section-label">Style</p>
+            <div class="style-picker">
+              <label class="style-opt">
+                <input type="radio" name="usernameStyle" value="word" checked />
+                <span class="style-opt-box">
+                  <span class="style-opt-name">Word</span>
+                  <span class="style-opt-eg">SwiftHawk</span>
+                </span>
+              </label>
+              <label class="style-opt">
+                <input type="radio" name="usernameStyle" value="wordn" />
+                <span class="style-opt-box">
+                  <span class="style-opt-name">Word + Number</span>
+                  <span class="style-opt-eg">SwiftHawk42</span>
+                </span>
+              </label>
+              <label class="style-opt">
+                <input type="radio" name="usernameStyle" value="random" />
+                <span class="style-opt-box">
+                  <span class="style-opt-name">Random</span>
+                  <span class="style-opt-eg">xK7m_Qa2</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <button class="history-link" id="historyBtnUn">
+            Generator history
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+      </div><!-- /gen-wrapper -->
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         FILE VAULT
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-vault" class="panel">
+      <div class="vault-grid">
+
+        <div class="vault-card">
+          <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            Encrypt File
+          </h3>
+          <div class="drop-zone" id="dropZone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="34" height="34">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p>Drop file here or <label class="browse-link" for="fileInput">browse</label></p>
+            <p class="drop-hint">All processing is local — nothing leaves your device</p>
+            <input type="file" id="fileInput" hidden />
+          </div>
+          <div class="vault-pw-row">
+            <input type="password" class="vault-input" id="encPw" placeholder="Encryption passphrase…" />
+            <button class="btn-show" id="showEncPw">👁</button>
+          </div>
+          <div class="pw-strength-mini" id="encPwStrength"></div>
+          <button class="btn-primary full" id="encryptBtn" disabled>Encrypt &amp; Download</button>
+          <div class="vault-status" id="encStatus"></div>
+        </div>
+
+        <div class="vault-card">
+          <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+              <circle cx="12" cy="16" r="1" fill="currentColor"/>
+            </svg>
+            Decrypt File
+          </h3>
+          <div class="drop-zone" id="dropZoneDec">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="34" height="34">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p>Drop <span class="mono">.vault</span> file here or <label class="browse-link" for="vaultInput">browse</label></p>
+            <input type="file" id="vaultInput" accept=".vault" hidden />
+          </div>
+          <div class="vault-pw-row">
+            <input type="password" class="vault-input" id="decPw" placeholder="Decryption passphrase…" />
+            <button class="btn-show" id="showDecPw">👁</button>
+          </div>
+          <button class="btn-accent full" id="decryptBtn" disabled>Unlock &amp; Download</button>
+          <div class="vault-status" id="decStatus"></div>
+        </div>
+
+      </div>
+
+      <div class="vault-log">
+        <h3 class="card-title">Session Log</h3>
+        <div class="log-list" id="logList">
+          <p class="log-empty">No activity this session.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         LAB ANALYSIS
+    ══════════════════════════════════════════════════════ -->
+    <section id="tab-lab" class="panel">
+
+      <!-- Password input with real-time analysis -->
+      <div class="lab-input-wrap">
+        <div class="lab-input-row">
+          <div class="lab-field-wrap">
+            <input type="password" class="lab-input" id="labInput" placeholder=" " autocomplete="off" />
+            <label class="lab-field-lbl">Enter password to analyse</label>
+          </div>
+          <button class="btn-show" id="showLabPw">👁</button>
+        </div>
+        <div class="lab-quick-bar">
+          <div class="lab-quick-fill" id="labQuickFill"></div>
+        </div>
+      </div>
+
+      <div class="lab-grid">
+
+        <!-- Score ring -->
+        <div class="lab-card" id="cardScore">
+          <h4 class="lab-card-title">Strength Score</h4>
+          <div class="score-display">
+            <div class="score-ring-wrap">
+              <svg class="score-ring" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" class="ring-track"/>
+                <circle cx="50" cy="50" r="40" class="ring-fill" id="ringFill"/>
+              </svg>
+              <div class="score-center">
+                <span class="score-num" id="scoreNum">—</span>
+                <span class="score-sub">/ 100</span>
+              </div>
+            </div>
+            <div class="score-meta">
+              <div class="score-label" id="scoreLabel">—</div>
+              <div class="meta-row"><span class="meta-key">Entropy</span><span class="meta-val" id="scoreEntropy">—</span></div>
+              <div class="meta-row"><span class="meta-key">Length</span><span class="meta-val" id="pwLength">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Character classes -->
+        <div class="lab-card">
+          <h4 class="lab-card-title">Character Classes</h4>
+          <div class="class-list">
+            <div class="class-item" id="clLower"><span class="class-icon">a–z</span><span class="class-name">Lowercase</span><span class="class-check">✗</span></div>
+            <div class="class-item" id="clUpper"><span class="class-icon">A–Z</span><span class="class-name">Uppercase</span><span class="class-check">✗</span></div>
+            <div class="class-item" id="clDigit"><span class="class-icon">0–9</span><span class="class-name">Digits</span><span class="class-check">✗</span></div>
+            <div class="class-item" id="clSymbol"><span class="class-icon">!@#</span><span class="class-name">Symbols</span><span class="class-check">✗</span></div>
+          </div>
+        </div>
+
+        <!-- Pattern detection -->
+        <div class="lab-card">
+          <h4 class="lab-card-title">Pattern Detection</h4>
+          <div class="pattern-list" id="patternList">
+            <p class="lab-empty">Enter a password to scan.</p>
+          </div>
+        </div>
+
+        <!-- Attack Risk Analysis — full width -->
+        <div class="lab-card full-width" id="cardAttack">
+          <h4 class="lab-card-title">Attack Risk Analysis</h4>
+          <div class="attack-graph" id="attackGraph">
+            <p class="lab-empty">Enter a password to see attack risk by scenario.</p>
+          </div>
+        </div>
+
+        <!-- Recommendations — full width -->
+        <div class="lab-card full-width" id="cardSuggestions">
+          <h4 class="lab-card-title">Recommendations</h4>
+          <div class="suggestions-list" id="suggestionsList">
+            <p class="lab-empty">Enter a password to receive recommendations.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ──────────────────────────────────────────────── -->
+  <footer>PASSVAULT &bull; No server data &bull; All crypto runs locally in your browser</footer>
+
+  <!-- ══════════════════════════════════════════════════════════
+       GENERATOR HISTORY MODAL
+  ══════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="historyModal">
+    <div class="history-panel" role="dialog" aria-modal="true" aria-label="Generator history">
+      <div class="history-header">
+        <h3 class="history-title">Generator history</h3>
+        <div class="history-hdr-actions">
+          <button class="hdr-btn" id="clearHistoryBtn">Clear all</button>
+          <button class="hdr-btn hdr-btn-close" id="closeHistoryBtn" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="history-list" id="historyList">
+        <p class="history-empty">No passwords generated this session.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/analyzer.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
