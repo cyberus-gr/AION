@@ -1,6 +1,15 @@
 /**
  * emailchecker.js — Email breach lookup via XposedOrNot public API.
  * https://xposedornot.com/api_doc
+ *
+ * Actual response formats (verified via curl):
+ *   Found:     GET /v1/check-email/{email} → 200
+ *              {"breaches":[["name1","name2",...]],"email":"...","status":"success"}
+ *   Not found: GET /v1/check-email/{email} → 200
+ *              {"Error":"Not found","email":null}
+ *   Metadata:  GET /v1/breaches → 200
+ *              {"status":"success","exposedBreaches":[{breachID, breachedDate,
+ *               exposedRecords, exposedData:[], domain, industry, passwordRisk,...}]}
  */
 
 'use strict';
@@ -13,7 +22,8 @@ function _esc(s) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-/* ── Breach metadata cache (optional enrichment) ─────────────── */
+/* ── Breach metadata cache ───────────────────────────────────── */
+// Keyed by breachID (exact + lowercase for resilient lookup)
 let _meta = null;
 
 async function _loadMeta() {
@@ -23,57 +33,30 @@ async function _loadMeta() {
     const r = await fetch(`${_XON}/breaches`);
     if (!r.ok) return;
     const d = await r.json();
-    (d.breaches ?? []).forEach(b => {
-      if (!b.breach) return;
-      _meta[b.breach]            = b;   // exact key
-      _meta[b.breach.toLowerCase()] = b; // lowercase fallback
+    // Real key: d.exposedBreaches, each item has .breachID
+    (d.exposedBreaches ?? []).forEach(b => {
+      if (!b.breachID) return;
+      _meta[b.breachID]            = b;
+      _meta[b.breachID.toLowerCase()] = b;
     });
-  } catch { /* metadata is bonus info — silently skip on failure */ }
+  } catch { /* metadata is enrichment only — silently skip on failure */ }
 }
 
-/* ── Robust breach names extractor ───────────────────────────── */
-// XposedOrNot may return [[name,name,...]] OR [name,name,...] OR null
-function _extractNames(exposures) {
-  const raw = exposures?.breaches;
-  if (!raw) return [];
-  if (Array.isArray(raw)) {
-    // Nested: [[name1, name2, ...]]
-    if (raw.length > 0 && Array.isArray(raw[0])) {
-      return raw[0].filter(x => typeof x === 'string' && x.length > 0);
-    }
-    // Flat: [name1, name2, ...]
-    return raw.filter(x => typeof x === 'string' && x.length > 0);
+/* ── Extract breach names from check-email response ─────────── */
+// API returns breaches as [[name1, name2, ...]] (nested array)
+function _extractNames(d) {
+  const raw = d?.breaches;
+  if (!Array.isArray(raw)) return [];
+  // Nested: [[name1, name2, ...]]
+  if (raw.length > 0 && Array.isArray(raw[0])) {
+    return raw[0].filter(x => typeof x === 'string' && x.length > 0);
   }
-  return [];
-}
-
-/* ── Year map from yearwise_details (inside main API response) ── */
-// Gives us breach year without needing a second API call
-function _buildYearMap(metrics) {
-  const map = {};
-  const details = metrics?.yearwise_details ?? [];
-
-  if (Array.isArray(details)) {
-    // Format: [{year:"2013", breaches:["Adobe"]}, ...]
-    details.forEach(entry => {
-      const yr    = String(entry.year ?? entry.Year ?? '').slice(0, 4);
-      const names = entry.breaches ?? entry.breach_names ?? entry.Breaches ?? [];
-      (Array.isArray(names) ? names : [names]).forEach(n => {
-        if (n && yr && !map[n]) map[n] = yr;
-      });
-    });
-  } else if (details && typeof details === 'object') {
-    // Format: {"2013": ["Adobe"], "2019": ["Collection1"]}
-    Object.entries(details).forEach(([yr, names]) => {
-      (Array.isArray(names) ? names : [names]).forEach(n => {
-        if (n && !map[n]) map[n] = String(yr).slice(0, 4);
-      });
-    });
-  }
-  return map;
+  // Flat fallback: [name1, name2, ...]
+  return raw.filter(x => typeof x === 'string' && x.length > 0);
 }
 
 /* ── Data type severity ──────────────────────────────────────── */
+// exposedData from the API is already a proper array of human-readable strings
 const _SEVERITY = {
   'Passwords':'critical','Password hints':'critical','Credit cards':'critical',
   'Bank account numbers':'critical','Social security numbers':'critical',
@@ -82,7 +65,7 @@ const _SEVERITY = {
   'Government issued IDs':'high','Health records':'high','Sexual orientations':'high',
   'Names':'medium','Usernames':'medium','Genders':'medium','Employers':'medium',
   'Job titles':'medium','Geographic locations':'medium','IP addresses':'medium',
-  'Device information':'medium',
+  'Device information':'medium','Social media profiles':'medium',
   'Email addresses':'low','Spoken languages':'low','Time zones':'low',
   'Website activity':'low',
 };
@@ -103,21 +86,19 @@ function _isValidEmail(s) {
 }
 
 /* ── Breach card renderer ────────────────────────────────────── */
-function _renderCard(name, yearMap) {
-  // Try exact match, then lowercase match
-  const info     = (_meta ?? {})[name] ?? (_meta ?? {})[name.toLowerCase()] ?? {};
-  const year     = info.xposed_date?.slice(0, 4) ?? yearMap?.[name] ?? null;
-  const count    = _fmtCount(info.xposed_records);
-  const domain   = info.domain   || null;
-  const industry = info.industry || null;
+function _renderCard(name) {
+  const m    = (_meta ?? {})[name] ?? (_meta ?? {})[name.toLowerCase()] ?? {};
 
-  const metaParts = [domain, industry, year, count].filter(Boolean);
-  const metaStr   = metaParts.join(' · ');
+  // Real field names from API: breachedDate, exposedRecords, exposedData, domain, industry
+  const year    = m.breachedDate ? m.breachedDate.slice(0, 4) : null;
+  const count   = _fmtCount(m.exposedRecords);
+  const domain  = m.domain   || null;
+  const industry= m.industry || null;
 
-  const types = info.xposed_data
-    ? info.xposed_data.split(';').map(s => s.trim()).filter(Boolean)
-    : [];
+  const metaStr = [domain, industry, year, count].filter(Boolean).join(' · ');
 
+  // exposedData is already an array of strings — no splitting needed
+  const types = Array.isArray(m.exposedData) ? m.exposedData : [];
   const chips = types.map(t =>
     `<span class="ec-chip ec-chip-${_chipClass(t)}">${_esc(t)}</span>`
   ).join('');
@@ -170,14 +151,13 @@ function _setState(state, data = {}) {
   }
 
   if (state === 'breached') {
-    const { email, breachNames, yearMap, metrics } = data;
-    const count   = breachNames.length;
-    const pwCount = metrics?.passwords?.[0]?.passwordcount ?? 0;
-    const pwWarn  = pwCount > 0
+    const { email, breachNames, pwCount } = data;
+    const count  = breachNames.length;
+    const pwWarn = pwCount > 0
       ? ` ${pwCount} breach${pwCount !== 1 ? 'es' : ''} exposed passwords — change them immediately.`
       : '';
 
-    const cards = breachNames.map(n => _renderCard(n, yearMap)).join('');
+    const cards = breachNames.map(n => _renderCard(n)).join('');
 
     el.innerHTML = `
       <div class="ec-state-box ec-breached">
@@ -234,10 +214,9 @@ async function _runCheck() {
 
   if (!email) { emailInput?.focus(); return; }
 
-  // Warn if opened via file:// — CORS will block external fetch
   if (window.location.protocol === 'file:') {
     _setState('error', {
-      message: 'Open via the local server to use this feature: run "python web/server.py" then visit http://localhost:8080 in your browser. Direct file:// access is blocked by browser CORS policy.',
+      message: 'Run the local server first: "python web/server.py", then open http://localhost:8080. Direct file:// access is blocked by browser CORS policy.',
     });
     return;
   }
@@ -252,17 +231,11 @@ async function _runCheck() {
   _setState('loading');
 
   try {
-    // Fetch metadata + email check in parallel
+    // Load metadata + check email in parallel
     const [, r] = await Promise.all([
       _loadMeta(),
       fetch(`${_XON}/check-email/${encodeURIComponent(email)}`, { cache: 'no-store' }),
     ]);
-
-    // 404 = clean email
-    if (r.status === 404) {
-      _setState('safe', { email });
-      return;
-    }
 
     if (!r.ok) {
       throw new Error(`API returned HTTP ${r.status}. Try again in a moment.`);
@@ -270,25 +243,33 @@ async function _runCheck() {
 
     const d = await r.json();
 
-    // API may also return {"Error":"Not found"} on 200
-    if (d.Error || !d.exposures) {
+    // Both found and not-found return HTTP 200
+    // Not found → {"Error":"Not found","email":null}
+    // Found     → {"breaches":[["name1","name2",...]],"email":"...","status":"success"}
+    if (d.Error || !d.breaches) {
       _setState('safe', { email });
       return;
     }
 
-    const breachNames = _extractNames(d.exposures);
-    const metrics     = d.exposures?.BreachMetrics ?? {};
-    const yearMap     = _buildYearMap(metrics);
+    const breachNames = _extractNames(d);
 
     if (breachNames.length === 0) {
       _setState('safe', { email });
-    } else {
-      _setState('breached', { email, breachNames, yearMap, metrics });
+      return;
     }
+
+    // Count breaches that exposed passwords (use metadata passwordRisk field)
+    const pwCount = breachNames.filter(n => {
+      const m = (_meta ?? {})[n] ?? (_meta ?? {})[n.toLowerCase()] ?? {};
+      const risk = (m.passwordRisk ?? '').toLowerCase();
+      return risk && risk !== 'none' && risk !== 'unknown' && risk !== '';
+    }).length;
+
+    _setState('breached', { email, breachNames, pwCount });
 
   } catch (e) {
     const msg = (e instanceof TypeError && e.message.toLowerCase().includes('fetch'))
-      ? 'Network error — could not reach the XposedOrNot API. Check your internet connection.'
+      ? 'Network error — could not reach XposedOrNot. Check your internet connection.'
       : e.message;
     _setState('error', { message: msg });
   } finally {
