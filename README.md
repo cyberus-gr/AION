@@ -1,226 +1,143 @@
-# Password Analyzer / Smart Generator
+<p align="center">
+  <img src="web/aion-logo.png" alt="AION Logo" width="120"/>
+</p>
 
-A command-line tool that scores password strength, explains weaknesses, and generates cryptographically secure credentials — with zero required dependencies beyond Python's standard library.
+<h1 align="center">AION</h1>
+<p align="center">
+  <strong>Password Analyzer · Smart Generator · Email Breach Checker</strong><br/>
+  A free, open-source security toolkit — no account, no tracking, no server-side storage.
+</p>
 
-```
-╭─────────────────── Password Analysis ───────────────────╮
-│ ████████████████████████░░░░░░░░░░░░░░  Strong (64/100) │
-╰─────────────────────────────────────────────────────────╯
+<p align="center">
+  <a href="https://cyberus.gr/AION">🌐 Live Demo — cyberus.gr/AION</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/cyberus-gr/AION">GitHub</a>
+  &nbsp;·&nbsp;
+  <a href="https://cyberus.gr">Cyberus</a>
+</p>
 
-  Entropy   52.4 bits effective  (raw: 65.5 bits)
-  Classes   Lowercase ✓   Uppercase ✓   Digits ✓   Symbols ✓
+---
 
-  Recommendations:
-    1. Extend to 16+ characters for a strong password (+39.3 bits).
-```
+## Overview
+
+AION is a browser-based security toolkit built as a single-page web app with zero external dependencies. Everything runs client-side — passwords are never sent to any server. The Email Breach Checker queries the [XposedOrNot](https://xposedornot.com) public API directly from your browser.
+
+---
+
+## Screenshots
+
+### Password Analyzer
+![Password Analyzer](screenshots/analyzer.png)
+
+### Smart Generator
+![Smart Generator](screenshots/generator.png)
+
+### Lab Analysis
+![Lab Analysis](screenshots/lab.png)
+
+### Email Breach Checker
+![Email Breach Checker — Breached](screenshots/email-breached.png)
+![Email Breach Checker — Safe](screenshots/email-safe.png)
 
 ---
 
 ## Features
 
-| Feature | Details |
+| Tab | What it does |
 |---|---|
-| Strength scoring | 0–100 score anchored at real cryptographic entropy thresholds |
-| Pattern detection | Keyboard walks, sequential runs, date patterns, repeating chars |
-| Leet-speak detection | `p@ssw0rd` is caught the same as `password` |
-| Common-password blocklist | 130+ breached passwords checked on every analysis |
-| Optional HIBP check | SHA-1 k-anonymity — your password never leaves the machine |
-| Auto-suggestions | Ranked by entropy gain per character, not generic tips |
-| Random password generator | `secrets.SystemRandom()`, rejection-sampled for policy compliance |
-| Passphrase generator | Diceware-style word phrases (≥45 bits at 5 words) |
-| PIN generator | Blocks all-same, sequential, and top-20 common PINs |
-| JSON output | `--json` for scripting and pipeline use |
-| No required deps | Falls back to ANSI plain renderer if `rich` is not installed |
+| **Password Analyzer** | Real-time strength scoring (0–100), entropy calculation, pattern detection (keyboard walks, sequences, leet-speak, dates), HIBP breach check, ranked fix suggestions |
+| **Smart Generator** | Cryptographically secure random passwords, Diceware-style passphrases, PINs — configurable length, charset, and policy rules |
+| **Lab Analysis** | Side-by-side password comparison, bulk batch analysis, strength distribution charts |
+| **Email Checker** | Checks your email against the XposedOrNot breach database, shows affected services with a full popup report |
 
 ---
 
-## Installation
+## Live App
+
+**https://cyberus.gr/AION**
+
+No install. Open in any modern browser.
+
+---
+
+## Run Locally
 
 ```bash
-git clone https://github.com/your-username/Password-Analyzer-Smart-Generator
-cd Password-Analyzer-Smart-Generator
-
-# Optional: install rich for polished output
-pip install rich
-
-# Run immediately — no install step needed
-python main.py --help
+git clone https://github.com/cyberus-gr/AION.git
+cd AION
+python web/server.py 8080
+# Open http://localhost:8080
 ```
 
+> The local server is only needed to satisfy browser CORS policy for `file://` URLs.
+> The deployed version on cyberus.gr runs without any backend.
+
 ---
 
-## Usage
+## Security & Privacy
 
-### Analyze a Password
+- **Passwords never leave your browser.** All analysis and generation is done in client-side JavaScript.
+- **HIBP check uses k-anonymity.** Only the first 5 characters of the SHA-1 hash are sent — your password is never transmitted.
+- **Email breach check is read-only.** Queries the XposedOrNot public API with no authentication or tracking.
+- **No cookies. No analytics. No accounts.**
+
+---
+
+## CLI Tool
+
+AION also ships a standalone Python CLI for terminal use:
 
 ```bash
-# Pass inline
+pip install rich        # optional, for polished output
+python main.py --help
+
+# Analyze
 python main.py analyze "MyP@ssword123"
-
-# Prompted securely (not echoed, not in shell history)
-python main.py analyze
-
-# Piped from another command
-echo "MyP@ssword123" | python main.py analyze
-
-# Also query HaveIBeenPwned (k-anonymity — safe)
 python main.py analyze --check-hibp "MyP@ssword123"
 
-# Machine-readable JSON for scripting
-python main.py analyze --json "MyP@ssword123"
-```
-
-### Generate a Password
-
-```bash
-# Random password (default: 16 chars, all character classes)
+# Generate
 python main.py generate
-
-# Longer, no ambiguous chars (0 O l 1 I)
-python main.py generate --length 24 --no-ambiguous
-
-# Show full strength analysis of the generated password
-python main.py generate --length 20 --analyze
-
-# No symbols (for systems with restricted charsets)
-python main.py generate --no-symbols
-```
-
-### Generate a Passphrase
-
-```bash
-# 5-word passphrase (default)
-python main.py generate --mode passphrase
-
-# 6 words, augmented with digit + symbol for policy compliance
-python main.py generate --mode passphrase --words 6 --augment
-
-# Custom separator, capitalised words
-python main.py generate --mode passphrase --separator " " --capitalize
-```
-
-### Generate a PIN
-
-```bash
-python main.py generate --mode pin           # 6-digit PIN (default)
+python main.py generate --mode passphrase --words 6
 python main.py generate --mode pin --length 8
 ```
-
----
-
-## Scoring Algorithm
-
-The score is computed in a **pipeline of independent signal modules**. Each stage can be understood and tested independently.
-
-### Stage 1 — Charset Entropy (theoretical ceiling)
-
-```
-H = L × log₂(N)
-```
-
-Where `L` = password length and `N` = active charset size (26 + 26 + 10 + 32 for all four classes).
-
-This is deliberately *optimistic* — it assumes every character was drawn uniformly at random from the full charset. Pattern penalties reduce it toward the true value.
-
-### Stage 2 — Structural Entropy (zlib heuristic)
-
-A second entropy estimate compresses the password with `zlib`. If the compressed form is significantly shorter than the original, the password has exploitable internal structure that the charset model cannot see (e.g., `abababababab`). The compression ratio drives a structural penalty factor.
-
-```python
-ratio = len(zlib.compress(password)) / len(password)
-structure_factor = max(0.4, min(1.0, ratio))
-effective_entropy_ceiling = charset_entropy × structure_factor
-```
-
-### Stage 3 — Pattern Penalties (multiplicative)
-
-Each detector returns a `factor ∈ [0, 1]`. Factors compose multiplicatively so independent weaknesses stack correctly — two 0.5-factor penalties yield 0.25, not 0.0.
-
-| Detector | Condition | Factor |
-|---|---|---|
-| Keyboard walk | 4+ adjacent keys (`qwer`) | 0.5 |
-| Keyboard walk | 6+ adjacent keys (`qwerty`) | 0.2 |
-| Sequential chars | 4+ sequential (`abcd`, `1234`) | 0.6 |
-| Sequential chars | 5+ sequential | 0.3 |
-| Repeating chars | 3+ identical in a row (`aaa`) | 0.6 |
-| Date/year pattern | `2023`, `5/12`, isolated 4-digit | 0.7 |
-| Common password | In blocklist or leet-normalised variant | 0.05 |
-
-### Stage 4 — Score Assembly & Policy Floor
-
-```
-effective_entropy = base_entropy × ∏(penalty.factor)
-score = piecewise_linear(effective_entropy, breakpoints)
-```
-
-| Effective Entropy | Score | Rationale |
-|---|---|---|
-| 0 bits | 0 | — |
-| 28 bits | 25 (Weak) | GPU cracks bcrypt cost-10 in < 1 second |
-| 60 bits | 75 (Strong) | Offline cracking infeasible on current KDFs |
-| 100 bits | 100 (Very Strong) | — |
-
-A policy floor caps any password under 8 characters at score 30 regardless of entropy. This is a policy decision, not a mathematical one — no reasonable system should accept sub-8-character passwords.
-
----
-
-## Generation Design
-
-All three generators use `secrets.SystemRandom()` (wraps `os.urandom()`). The `random` module is never imported in the generator package.
-
-**Random passwords** use rejection sampling: draw `length` characters, verify all required classes are present, redraw if not. Expected redraws: < 1.02 for any reasonable configuration.
-
-**Passphrases** draw uniformly from a ~500-word bundled wordlist using `secrets.randbelow(len(wordlist))`. 5 words yields ≈45 bits; the `--augment` flag appends a digit and symbol for systems requiring character-class diversity.
-
-**PINs** block all-same digits, ascending/descending runs of 4+, and the 20 most common PINs from breach data.
 
 ---
 
 ## Project Structure
 
 ```
-├── main.py                  # CLI entry point (argparse)
-├── analyzer/
-│   ├── scorer.py            # Master scoring pipeline → AnalysisResult
-│   ├── entropy.py           # charset_entropy + conditional_entropy (zlib)
-│   ├── patterns.py          # Pattern detectors + leet normalizer
-│   ├── dictionary.py        # Common-password blocklist + optional HIBP
-│   └── suggestions.py       # Signal → ranked fix suggestions
-├── generator/
-│   ├── random_gen.py        # Cryptographically secure character passwords
-│   ├── passphrase.py        # Diceware-style word passphrases
-│   └── pin.py               # PIN generator with weak-PIN rejection
-├── display/
-│   ├── plain.py             # ANSI colour renderer (stdlib only)
-│   └── rich_display.py      # Rich-powered renderer (optional)
-├── data/
-│   ├── common_passwords.txt # Blocked common passwords
-│   └── wordlist.txt         # Word pool for passphrases
-└── tests/                   # 64 tests, all independent, no mocks
+├── web/
+│   ├── index.html          # Single-page web app
+│   ├── style.css           # UI styles
+│   ├── aion-logo.png       # Logo
+│   └── js/
+│       ├── app.js          # Password analyzer + generator UI
+│       └── emailchecker.js # Email breach checker (XposedOrNot API)
+├── main.py                 # Python CLI entry point
+├── analyzer/               # Scoring pipeline (entropy, patterns, dict)
+├── generator/              # Password / passphrase / PIN generators
+├── display/                # CLI renderers (plain + rich)
+├── data/                   # Common passwords blocklist + wordlist
+└── tests/                  # 64 unit tests
 ```
 
 ---
 
-## Tests
+## Tech Stack
 
-```bash
-pip install pytest
-python -m pytest tests/ -v
-# 64 passed
-```
-
-Tests cover:
-- Known bad passwords score correctly (e.g., `password` → Very Weak)
-- Leet variants are caught (`p@ssw0rd` → caught)
-- All generators satisfy their own policies in statistical runs
-- PIN generator never produces sequential/all-same/top-20 PINs
-- Entropy functions agree with analytic values
+- **Frontend:** Vanilla HTML5 · CSS3 · JavaScript (ES2020) — no frameworks, no build step
+- **Email API:** [XposedOrNot](https://xposedornot.com/api_doc) public API (free, no key required)
+- **CLI Backend:** Python 3.8+ standard library only (`secrets`, `zlib`, `hashlib`, `getpass`)
+- **Hosting:** GitHub Pages via GitHub Actions
 
 ---
 
-## Security Notes
+## Deployment
 
-- **Passwords are never stored.** The `analyze` command accepts via argument, pipe, or `getpass` prompt only.
-- **HIBP uses k-anonymity.** Only the first 5 hex characters of the SHA-1 hash are sent. The full hash and original password never leave the machine.
-- **Generators use `os.urandom()` exclusively.** The `random` module (based on Mersenne Twister, not cryptographically secure) is never used in generation code.
-- **The common-password check is a floor, not a ceiling.** A password not in the blocklist is not automatically safe — that's what the entropy scoring is for.
+AION auto-deploys to GitHub Pages on every push to `main` via the workflow at [.github/workflows/deploy.yml](.github/workflows/deploy.yml).
+
+---
+
+## Part of Cyberus
+
+AION is an open-source project by [Cyberus](https://cyberus.gr) — an independent security research initiative.
