@@ -110,7 +110,7 @@ document.querySelectorAll('.tab').forEach(btn => {
    GENERATOR
 ════════════════════════════════════════════════════════════════ */
 
-/* ── Generator history (sessionStorage) ─────────────────────── */
+/* ── Generator history (in-session memory, cleared on page reload) ── */
 let _history = [];
 
 function addToHistory(type, value, score, label, cssClass) {
@@ -236,11 +236,11 @@ function setOutput(value, cssClass) {
   pwDisplay.className = `gen-output-value ${cssClass}`;
 }
 
-function setStrengthBar(score, cssClass) {
-  strengthFill.style.width   = `${score}%`;
+function setStrengthBar(score, cssClass, label) {
+  strengthFill.style.width      = `${score}%`;
   strengthFill.style.background = SCORE_COLORS[cssClass] ?? '#4f8ef7';
-  const labelMap = { 'Very Weak':'Very Weak','Weak':'Weak','Fair':'Fair','Strong':'Strong','Very Strong':'Very Strong' };
-  strengthLabel.textContent = '';
+  strengthLabel.textContent     = label ?? '';
+  strengthLabel.style.color     = SCORE_COLORS[cssClass] ?? '';
 }
 
 function doGenerate() {
@@ -276,7 +276,7 @@ function _genPassword() {
 
   const r = analyzePassword(pw);
   setOutput(pw, r.cssClass);
-  setStrengthBar(r.score, r.cssClass);
+  setStrengthBar(r.score, r.cssClass, r.label);
   addToHistory('password', pw, r.score, r.label, r.cssClass);
 }
 
@@ -289,7 +289,7 @@ function _genPassphrase() {
     ? 'Value must be between 3 and 20. Use 6 words or more to generate a strong passphrase.'
     : 'Value must be between 3 and 20.';
 
-  const { phrase, entropy, wordCount } = generatePassphrase({
+  const { phrase } = generatePassphrase({
     wordCount:   wc,
     separator:   sep,
     capitalize:  ppCapitalize.checked,
@@ -298,7 +298,7 @@ function _genPassphrase() {
 
   const r = analyzePassword(phrase);
   setOutput(phrase, 'passphrase');
-  setStrengthBar(r.score, r.cssClass);
+  setStrengthBar(r.score, r.cssClass, r.label);
   addToHistory('passphrase', phrase, r.score, r.label, r.cssClass);
 }
 

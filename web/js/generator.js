@@ -13,9 +13,11 @@ const SYMBOLS = '!@#$%^&*()-_=+[]{}|;:,.<>?';
 const AMBIGUOUS = new Set('0O1lI');
 
 /* ── Internal helper: cryptographically secure randBelow ─────── */
+// Rejection sampling eliminates modulo bias for non-power-of-2 pool sizes.
 function randBelow(n) {
+  const limit = 2 ** 32 - (2 ** 32 % n); // largest multiple of n that fits in uint32
   const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
+  do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
   return buf[0] % n;
 }
 
@@ -65,7 +67,7 @@ function generatePassword({
   if (pool.length < 2) throw new Error('Character pool is too small. Enable more character classes.');
 
   const digitsPool  = noAmbiguous ? [...DIGITS].filter(c => !AMBIGUOUS.has(c)).join('') : DIGITS;
-  const symbolsPool = SYMBOLS;
+  const symbolsPool = noAmbiguous ? [...SYMBOLS].filter(c => !AMBIGUOUS.has(c)).join('') : SYMBOLS;
   const upperPool   = noAmbiguous ? [...UPPER].filter(c => !AMBIGUOUS.has(c)).join('') : UPPER;
   const lowerPool   = noAmbiguous ? [...LOWER].filter(c => !AMBIGUOUS.has(c)).join('') : LOWER;
 
@@ -77,8 +79,8 @@ function generatePassword({
     attempts++;
     if (attempts > 2000) break; // safety valve
 
-    const numCount = [...candidate].filter(c => DIGITS.includes(c)).length;
-    const symCount = [...candidate].filter(c => SYMBOLS.includes(c)).length;
+    const numCount = [...candidate].filter(c => digitsPool.includes(c)).length;
+    const symCount = [...candidate].filter(c => symbolsPool.includes(c)).length;
     const hasUpper = !useUpper || [...candidate].some(c => upperPool.includes(c));
     const hasLower = !useLower || [...candidate].some(c => lowerPool.includes(c));
 

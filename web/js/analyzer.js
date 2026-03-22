@@ -39,6 +39,23 @@ function charsetEntropy(pw) {
   return pw.length * Math.log2(Math.max(size, 1));
 }
 
+/* ── Structural factor (mirrors Python's zlib heuristic) ─────── */
+// Detects repetitive / low-diversity passwords that charset entropy overstates.
+// Returns a factor in [0.4, 1.0] — lower = more repetitive.
+function structuralFactor(pw) {
+  if (pw.length < 4) return 1.0;
+  const unique      = new Set(pw).size;
+  const uniqueRatio = unique / pw.length;          // 1/len for all-same, 1.0 for all-different
+  let maxRun = 1, run = 1;
+  for (let i = 1; i < pw.length; i++) {
+    run = pw[i] === pw[i - 1] ? run + 1 : 1;
+    if (run > maxRun) maxRun = run;
+  }
+  const runPenalty = 1.0 - (maxRun - 1) / pw.length; // 0 for all-same, 1.0 for no runs
+  const factor     = Math.min(uniqueRatio * 2, 1.0) * runPenalty;
+  return Math.max(0.4, factor);                    // floor at 0.4 matches Python
+}
+
 /* ── Pattern detectors ───────────────────────────────────────── */
 const KB_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm', '1234567890'];
 const KB_ADJ = {};
@@ -74,7 +91,7 @@ function longestSequentialRun(pw) {
   for (const dir of [1, -1]) {
     let runLen = 1, runStart = 0;
     for (let i = 1; i < pw.length; i++) {
-      if (pw[i].charCodeAt(0) - pw[i-1].charCodeAt(0) === dir) {
+      if (pw[i].toLowerCase().charCodeAt(0) - pw[i-1].toLowerCase().charCodeAt(0) === dir) {
         runLen++;
       } else {
         if (runLen > bestLen) { bestLen = runLen; bestStart = runStart; }
@@ -187,7 +204,6 @@ function buildSuggestions(pw, penalties, isCommon) {
   }];
 
   const suggestions = [];
-  const penaltyNames = new Set(penalties.map(p => p.name));
   const hasLower  = /[a-z]/.test(pw);
   const hasUpper  = /[A-Z]/.test(pw);
   const hasDigit  = /[0-9]/.test(pw);
@@ -243,9 +259,10 @@ function analyzePassword(pw) {
       desc: 'Password found in common-password list or breach databases', match: pw });
   }
 
-  // Multiplicative penalty composition
-  const factor = penalties.reduce((f, p) => f * p.factor, 1.0);
-  const effective = raw * factor;
+  // Structural penalty (repetitive/low-diversity passwords) then pattern penalties
+  const base     = raw * structuralFactor(pw);
+  const factor   = penalties.reduce((f, p) => f * p.factor, 1.0);
+  const effective = base * factor;
 
   let score = entropyToScore(effective);
   if (pw.length < 8) score = Math.min(score, 30); // policy floor

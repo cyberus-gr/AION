@@ -31,7 +31,14 @@ const PBKDF2_ITER = 310_000;
 /* ── Internal helpers ────────────────────────────────────────── */
 
 function b64encode(buf) {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  // Process in 8 KB chunks to avoid call-stack overflow on large files
+  const bytes = new Uint8Array(buf);
+  let str = '';
+  const CHUNK = 8192;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    str += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(str);
 }
 
 function b64decode(str) {

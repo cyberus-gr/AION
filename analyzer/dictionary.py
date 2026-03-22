@@ -70,5 +70,8 @@ def hibp_count(password: str) -> int | None:
     for line in body.splitlines():
         hash_suffix, _, count_str = line.partition(":")
         if hash_suffix.upper() == suffix:
-            return int(count_str)
+            try:
+                return int(count_str.strip())
+            except ValueError:
+                return 0
     return 0
