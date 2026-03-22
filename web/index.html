@@ -440,6 +440,32 @@
     </div>
   </div>
 
+  <!-- ══ EMAIL CHECKER MODAL ════════════════════════════════════ -->
+  <div class="ec-modal-overlay hidden" id="ecModal" role="dialog" aria-modal="true">
+    <div class="ec-modal" id="ecModalBox">
+      <button class="ec-modal-close" id="ecModalClose" aria-label="Close">&#x2715;</button>
+
+      <div class="ec-modal-header" id="ecModalHeader">
+        <div class="ec-modal-icon" id="ecModalIcon"></div>
+        <h2 class="ec-modal-title" id="ecModalTitle"></h2>
+      </div>
+
+      <div class="ec-modal-body">
+        <div class="ec-modal-row">
+          <span class="ec-modal-row-label">Searched Email</span>
+          <span class="ec-modal-badge" id="ecModalEmail"></span>
+        </div>
+        <div class="ec-modal-row">
+          <span class="ec-modal-row-label">Breaches Found</span>
+          <span class="ec-modal-badge" id="ecModalCount"></span>
+        </div>
+        <div class="ec-modal-detail" id="ecModalDetail"></div>
+      </div>
+
+      <div class="ec-modal-footer" id="ecModalFooter"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="js/analyzer.js"></script>
