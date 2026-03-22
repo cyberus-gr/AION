@@ -26,14 +26,11 @@ AION is a browser-based security toolkit built as a single-page web app with zer
 
 ## Screenshots
 
-### Password Analyzer
-![Password Analyzer](screenshots/analyzer.png)
+### Lab Analysis
+![Lab Analysis](screenshots/lab.png)
 
 ### Smart Generator
 ![Smart Generator](screenshots/generator.png)
-
-### Lab Analysis
-![Lab Analysis](screenshots/lab.png)
 
 ### Email Breach Checker
 ![Email Breach Checker — Breached](screenshots/email-breached.png)
