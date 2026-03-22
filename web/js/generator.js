@@ -73,9 +73,7 @@ function generatePassword({
 
   let candidate, attempts = 0;
   do {
-    const buf = new Uint32Array(length);
-    crypto.getRandomValues(buf);
-    candidate = Array.from(buf, x => pool[x % pool.length]).join('');
+    candidate = Array.from({ length }, () => pool[randBelow(pool.length)]).join('');
     attempts++;
     if (attempts > 2000) break; // safety valve
 
@@ -153,9 +151,7 @@ function generatePassphrase({
 } = {}) {
   wordCount = Math.max(3, Math.min(20, wordCount));
 
-  const buf = new Uint32Array(wordCount);
-  crypto.getRandomValues(buf);
-  let words = Array.from(buf, x => WORDLIST[x % WORDLIST.length]);
+  let words = Array.from({ length: wordCount }, () => WORDLIST[randBelow(WORDLIST.length)]);
 
   if (capitalize) words = words.map(w => w[0].toUpperCase() + w.slice(1));
 
@@ -200,9 +196,7 @@ function generateUsername(style = 'word') {
   if (style === 'random') {
     const pool = LOWER + UPPER + DIGITS + '_';
     const length = 8 + randBelow(5); // 8-12 chars
-    const buf = new Uint32Array(length);
-    crypto.getRandomValues(buf);
-    return Array.from(buf, x => pool[x % pool.length]).join('');
+    return Array.from({ length }, () => pool[randBelow(pool.length)]).join('');
   }
 
   const adj  = UN_ADJECTIVES[randBelow(UN_ADJECTIVES.length)];

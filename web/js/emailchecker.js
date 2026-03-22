@@ -19,23 +19,6 @@ function _esc(s) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-/* ── Breach metadata cache ───────────────────────────────────── */
-let _meta = null;
-
-async function _loadMeta() {
-  if (_meta !== null) return;
-  _meta = {};
-  try {
-    const r = await fetch(`${_XON}/breaches`);
-    if (!r.ok) return;
-    const d = await r.json();
-    (d.exposedBreaches ?? []).forEach(b => {
-      if (!b.breachID) return;
-      _meta[b.breachID]               = b;
-      _meta[b.breachID.toLowerCase()] = b;
-    });
-  } catch { /* metadata is enrichment only */ }
-}
 
 /* ── Robust breach name extraction ──────────────────────────── */
 function _extractNames(d) {
@@ -52,10 +35,6 @@ function _extractNames(d) {
 /* ── Helpers ─────────────────────────────────────────────────── */
 function _isValidEmail(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim());
-}
-
-function _meta_for(name) {
-  return (_meta ?? {})[name] ?? (_meta ?? {})[name.toLowerCase()] ?? {};
 }
 
 /* ── Inline status (loading / error only) ────────────────────── */
@@ -198,11 +177,7 @@ async function _runCheck() {
   _setStatus('loading');
 
   try {
-    // Load metadata + check email in parallel
-    const [, r] = await Promise.all([
-      _loadMeta(),
-      fetch(`${_XON}/check-email/${encodeURIComponent(email)}`, { cache: 'no-store' }),
-    ]);
+    const r = await fetch(`${_XON}/check-email/${encodeURIComponent(email)}`, { cache: 'no-store' });
 
     if (!r.ok) {
       throw new Error(`API returned HTTP ${r.status}. Try again in a moment.`);

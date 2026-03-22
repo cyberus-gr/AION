@@ -65,7 +65,12 @@ async function deriveKey(passphrase, salt) {
  * Encrypt a File object with the given passphrase.
  * Returns a Blob of the .vault JSON package, ready to download.
  */
+const MAX_FILE_BYTES = 100 * 1024 * 1024; // 100 MB
+
 async function encryptFile(file, passphrase) {
+  if (file.size > MAX_FILE_BYTES) {
+    throw new Error(`File is too large (${formatBytes(file.size)}). Maximum supported size is 100 MB.`);
+  }
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv   = crypto.getRandomValues(new Uint8Array(12));
   const key  = await deriveKey(passphrase, salt);
@@ -144,12 +149,3 @@ function downloadBlob(blob, filename) {
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
 }
 
-/**
- * Format bytes to human-readable string.
- */
-function formatBytes(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-  return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
-}

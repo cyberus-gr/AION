@@ -10,14 +10,35 @@
 
 /* ── Common passwords blocklist ──────────────────────────────── */
 const COMMON_PASSWORDS = new Set([
-  'password','123456','12345678','qwerty','abc123','111111','123456789',
-  'password1','letmein','monkey','dragon','1234567890','trustno1','iloveyou',
-  'welcome','shadow','master','sunshine','princess','football','baseball',
-  'michael','qwerty123','passw0rd','p@ssword','p@ssw0rd','password123',
-  'password!','admin123','test123','guest','admin','root','login','user',
-  'batman','superman','spiderman','starwars','solo','hello','changeme',
-  'qweasd','asdfgh','zxcvbn','0987654321','1111111111','abcdef','temp',
-  'summer2023','winter2023','spring2023','google','amazon','facebook','twitter',
+  // Top breach passwords
+  'password','password1','password123','password!','passw0rd','p@ssword','p@ssw0rd',
+  '123456','1234567','12345678','123456789','1234567890','12345','123123','111111',
+  '000000','654321','666666','696969','1q2w3e','1q2w3e4r','1q2w3e4r5t',
+  'qwerty','qwerty123','qwertyuiop','qweasdzxc','asdfgh','asdfghjkl','zxcvbn',
+  'abc123','abcdef','abcd1234','letmein','login','welcome','hello','hello123',
+  'monkey','dragon','master','shadow','sunshine','princess','football','baseball',
+  'michael','batman','superman','spiderman','starwars','solo','iloveyou',
+  'admin','admin123','admin1234','administrator','root','root123','toor',
+  'guest','user','test','test123','temp','temp123','demo','demo123',
+  'changeme','change_me','mustchange','default','blank',
+  'trustno1','letmein1','qazwsx','qazwsxedc','1qaz2wsx','zaq1xsw2',
+  'pass','pass123','passpass','mypassword','mypass','newpassword',
+  'google','amazon','facebook','twitter','instagram','linkedin','netflix',
+  'summer','summer1','summer2023','summer2024','winter','winter2023','winter2024',
+  'spring','spring2023','spring2024','autumn','autumn2023',
+  'january','february','march','april','june','july','august',
+  'september','october','november','december',
+  '0987654321','1111111111','2222222222','1234554321','9876543210',
+  'pass@123','pass@1234','password@1','password@123','p@$$word','p@$$w0rd',
+  'abc@123','admin@123','test@123','user@123','login@123',
+  'football1','baseball1','soccer','hockey','tennis','basketball',
+  'sunshine1','princess1','dragon1','monkey1','shadow1','master1',
+  'whatever','nothing','nobody','someone','anyone','everyone',
+  'computer','internet','server','network','database','security',
+  'secret','mysecret','topsecret','classified','private',
+  'love','loveyou','iloveyou1','123love','love123',
+  'happy','happy1','happy123','lucky','lucky1','lucky123',
+  'access','access1','access123','guest123','visitor','visitor123',
 ]);
 
 /* ── Leet normaliser ─────────────────────────────────────────── */
